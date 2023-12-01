@@ -13,6 +13,40 @@ fn main() {
 
     let file = fs::read_to_string(path).expect("Error, could not read file");
 
+    let sum_1 = task_1(file.clone());
+    let sum_2 = task_2(file.clone());
+
+    println!("{}", sum_1);
+    println!("{}", sum_2);
+}
+
+fn task_1(file: String) -> u32 {
+    let mut sum: u32 = 0;
+    for line in file.lines() {
+        let mut first: u32 = 0;
+        for c in line.chars() {
+            if c.is_ascii_digit() {
+                first = c.to_digit(10).unwrap();
+                break;
+            }
+        }
+
+        let mut last: u32 = 0;
+        for c in line.chars().rev() {
+            if c.is_ascii_digit() {
+                last = c.to_digit(10).unwrap();
+                break;
+            }
+        }
+
+        let n = first * 10 + last;
+        sum += n;
+    }
+
+    sum
+}
+
+fn task_2(file: String) -> u32 {
     let numbers = [ "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" ];
 
     let numbers: Vec<String> = numbers.iter().map(|&s| s.to_string()).collect();
@@ -79,5 +113,5 @@ fn main() {
         sum += n;
     }
 
-    println!("{}", sum);
+    sum
 }
