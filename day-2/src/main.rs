@@ -55,8 +55,6 @@ fn task_2(file: String) -> u32 {
     let mut sum = 0;
     for line in file.lines() {
         let begin = line.find(':').expect("Could not find ':'");
-        let end = line.find(' ').expect("Could not find ' '");
-        let game = line.get(end + 1..begin).expect("Slice out of bound").parse::<u32>().expect("Could not parse game");
         let parts = line.get(begin + 1..).expect("Slice out of bound");
 
         let mut red = 0;
