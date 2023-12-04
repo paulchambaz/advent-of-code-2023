@@ -35,84 +35,79 @@ fn aabb(a_start: i32, a_end: i32, b_x: i32) -> bool {
     a_start - 1 <= b_x && a_end + 1 >= b_x
 }
 
-fn merge_items<T: Clone>(items: &[Vec<T>], y: usize) -> Vec<T> {
-    let mut merged = Vec::new();
-    if y as i32 - 1 >= 0 {
-        if let Some(prev) = items.get(y - 1) {
-            merged.extend_from_slice(prev);
-        }
-    }
-    if let Some(current) = items.get(y) {
-        merged.extend_from_slice(current);
-    }
-    if y + 1 < items.len() {
-        if let Some(next) = items.get(y + 1) {
-            merged.extend_from_slice(next);
-        }
-    }
-    merged
-}
-
 fn task_1(file: String) -> u32 {
+    const SPECIAL_CHARS: [char; 10] = ['#', '%', '&', '*', '+', '-', '/', '=', '@', '$'];
     let n = file.lines().count();
     let mut engines: Vec<Vec<Engine>> = Vec::with_capacity(n);
-    for _ in 0..n { engines.push(Vec::new()); }
     let mut powers: Vec<Vec<Power>> = Vec::with_capacity(n);
-    for _ in 0..n { powers.push(Vec::new()); }
+    let mut str = String::with_capacity(4);
+
+    for _ in 0..n {
+        engines.push(Vec::with_capacity(16));
+        powers.push(Vec::with_capacity(16));
+    }
+
     for (y, line) in file.lines().enumerate() {
-        let mut str = String::new();
+        str.clear();
         let mut start = -1;
         for (x, char) in line.chars().enumerate() {
+            let x = x as i32;
+
             if char.is_numeric() {
                 if start == -1 {
-                    start = x as i32;
+                    start = x;
                 }
                 str.push(char);
-            } else if "#%&*+-/=@$".contains(char) {
-                let power = Power {
-                    x: x as i32,
-                };
-                powers[y].push(power);
+            } else {
                 if start != -1 {
-                    let engine = Engine {
-                        number: str.parse::<i32>().expect("Error trying to parse number"),
-                        start,
-                        end: (x - 1) as i32,
+                    match str.parse::<i32>() {
+                        Ok(number) => engines[y].push(Engine { number, start, end: x - 1 }),
+                        Err(_) => { eprintln!("Error trying to parse number"); process::exit(1); },
                     };
-                    engines[y].push(engine);
                     str.clear();
                     start = -1;
                 }
-            } else if start != -1 {
-                let engine = Engine {
-                    number: str.parse::<i32>().expect("Error trying to parse number"),
-                    start,
-                    end: (x - 1) as i32,
-                };
-                engines[y].push(engine);
-                str.clear();
-                start = -1;
+
+                if SPECIAL_CHARS.contains(&char) {
+                    powers[y].push(Power { x });
+                }
             }
         }
 
         if start != -1 {
-            let engine = Engine {
-                number: str.parse::<i32>().expect("Error trying to parse number"),
-                start,
-                end: (line.len() - 1) as i32,
+            match str.parse::<i32>() {
+                Ok(number) => engines[y].push(Engine { number, start, end: (line.len() as i32) - 1 }),
+                Err(_) => { eprintln!("Error trying to parse number"); process::exit(1); },
             };
-            engines[y].push(engine);
         }
     }
 
     let mut sum = 0;
     for (y, engine_group) in engines.into_iter().enumerate() {
-        let merged = merge_items::<Power>(&powers, y);
         for engine in engine_group {
-            for power in &merged {
+            if y as i32 > 0 {
+                for power in &powers[y - 1] {
+                    if aabb(engine.start, engine.end, power.x) {
+                        sum += engine.number;
+                        break;
+                    }
+                }
+            }
+
+            for power in &powers[y] {
                 if aabb(engine.start, engine.end, power.x) {
                     sum += engine.number;
                     break;
+                }
+            }
+
+
+            if y + 1 < powers.len() {
+                for power in &powers[y + 1] {
+                    if aabb(engine.start, engine.end, power.x) {
+                        sum += engine.number;
+                        break;
+                    }
                 }
             }
         }
@@ -122,70 +117,94 @@ fn task_1(file: String) -> u32 {
 }
 
 fn task_2(file: String) -> u32 {
+    const SPECIAL_CHARS: [char; 10] = ['#', '%', '&', '*', '+', '-', '/', '=', '@', '$'];
     let n = file.lines().count();
     let mut engines: Vec<Vec<Engine>> = Vec::with_capacity(n);
-    for _ in 0..n { engines.push(Vec::new()); }
     let mut powers: Vec<Vec<Power>> = Vec::with_capacity(n);
-    for _ in 0..n { powers.push(Vec::new()); }
+    let mut str = String::with_capacity(4);
+
+    for _ in 0..n {
+        engines.push(Vec::with_capacity(16));
+        powers.push(Vec::with_capacity(16));
+    }
+
     for (y, line) in file.lines().enumerate() {
-        let mut str = String::new();
+        str.clear();
         let mut start = -1;
         for (x, char) in line.chars().enumerate() {
+            let x = x as i32;
+
             if char.is_numeric() {
                 if start == -1 {
-                    start = x as i32;
+                    start = x;
                 }
                 str.push(char);
-            } else if char == '*' {
-                let power = Power {
-                    x: x as i32,
-                };
-                powers[y].push(power);
+            } else {
                 if start != -1 {
-                    let engine = Engine {
-                        number: str.parse::<i32>().expect("Error trying to parse number"),
-                        start,
-                        end: (x - 1) as i32,
+                    match str.parse::<i32>() {
+                        Ok(number) => engines[y].push(Engine { number, start, end: x - 1 }),
+                        Err(_) => { eprintln!("Error trying to parse number"); process::exit(1); },
                     };
-                    engines[y].push(engine);
                     str.clear();
                     start = -1;
                 }
-            } else if start != -1 {
-                let engine = Engine {
-                    number: str.parse::<i32>().expect("Error trying to parse number"),
-                    start,
-                    end: (x - 1) as i32,
-                };
-                engines[y].push(engine);
-                str.clear();
-                start = -1;
+
+                if SPECIAL_CHARS.contains(&char) {
+                    powers[y].push(Power { x });
+                }
             }
         }
 
         if start != -1 {
-            let engine = Engine {
-                number: str.parse::<i32>().expect("Error trying to parse number"),
-                start,
-                end: (line.len() - 1) as i32,
+            match str.parse::<i32>() {
+                Ok(number) => engines[y].push(Engine { number, start, end: (line.len() as i32) - 1 }),
+                Err(_) => { eprintln!("Error trying to parse number"); process::exit(1); },
             };
-            engines[y].push(engine);
         }
     }
 
     let mut sum = 0;
+    let mut ratios: [i32; 2] = [0; 2];
     for (y, power_group) in powers.into_iter().enumerate() {
-        let merged = merge_items::<Engine>(&engines, y);
-        for power in power_group {
-            let mut ratios: Vec<i32> = Vec::new();
-            for engine in &merged {
-                if aabb(engine.start, engine.end, power.x) {
-                    ratios.push(engine.number);
+        'power_loop: for power in power_group {
+            let mut len = 0;
+
+            if y as i32 > 0 {
+                for engine in &engines[y - 1] {
+                    if aabb(engine.start, engine.end, power.x) {
+                        if len == 2 {
+                            continue 'power_loop
+                        }
+                        ratios[len] = engine.number;
+                        len += 1;
+                    }
                 }
             }
-            if ratios.len() == 2 {
-                let product: i32 = ratios.iter().product();
-                sum += product;
+
+            for engine in &engines[y] {
+                if aabb(engine.start, engine.end, power.x) {
+                    if len == 2 {
+                        continue 'power_loop
+                    }
+                    ratios[len] = engine.number;
+                    len += 1;
+                }
+            }
+
+            if y + 1 < engines.len() {
+                for engine in &engines[y + 1] {
+                    if aabb(engine.start, engine.end, power.x) {
+                        if len == 2 {
+                            continue 'power_loop
+                        }
+                        ratios[len] = engine.number;
+                        len += 1;
+                    }
+                }
+            }
+
+            if len == 2 {
+                sum += ratios[0] * ratios[1];
             }
         }
     }
