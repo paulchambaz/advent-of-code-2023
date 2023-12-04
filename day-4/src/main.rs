@@ -13,7 +13,7 @@ fn main() {
     let file = fs::read_to_string(path).expect("Error, could not read file");
 
     let task_1 = task_1(file.clone());
-    let task_2 = task_2(file.clone());
+    let task_2 = task_2(file);
 
     println!("Task 1: {}", task_1);
     println!("Task 2: {}", task_2);

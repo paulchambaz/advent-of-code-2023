@@ -14,7 +14,7 @@ fn main() {
     let file = fs::read_to_string(path).expect("Error, could not read file");
 
     let sum_1 = task_1(file.clone());
-    let sum_2 = task_2(file.clone());
+    let sum_2 = task_2(file);
 
     println!("Sum: {}", sum_1);
     println!("Sum: {}", sum_2);
