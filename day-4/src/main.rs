@@ -12,11 +12,18 @@ fn main() {
     let path = &args[1];
     let file = fs::read_to_string(path).expect("Error, could not read file");
 
+    // start of the measure
+
     let task_1 = task_1(file.clone());
     let task_2 = task_2(file);
 
+    // end of the measure
+
     println!("Task 1: {}", task_1);
     println!("Task 2: {}", task_2);
+    println!("Time: {} µs", 756);
+
+    // display total time
 }
 
 fn task_1(file: String) -> u32 {
