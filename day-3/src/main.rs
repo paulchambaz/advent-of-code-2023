@@ -37,7 +37,7 @@ fn aabb(a_start: i32, a_end: i32, b_x: i32) -> bool {
 
 fn merge_items<T: Clone>(items: &[Vec<T>], y: usize) -> Vec<T> {
     let mut merged = Vec::new();
-    if y as i32 > 0 {
+    if y as i32 - 1 >= 0 {
         if let Some(prev) = items.get(y - 1) {
             merged.extend_from_slice(prev);
         }
@@ -99,7 +99,7 @@ fn task_1(file: String) -> u32 {
             let engine = Engine {
                 number: str.parse::<i32>().expect("Error trying to parse number"),
                 start,
-                end: (str.len() - 1) as i32,
+                end: (line.len() - 1) as i32,
             };
             engines[y].push(engine);
         }
@@ -108,7 +108,6 @@ fn task_1(file: String) -> u32 {
     let mut sum = 0;
     for (y, engine_group) in engines.into_iter().enumerate() {
         let merged = merge_items::<Power>(&powers, y);
-        println!("{} {:?}", y, merged);
         for engine in engine_group {
             for power in &merged {
                 if aabb(engine.start, engine.end, power.x) {
@@ -168,7 +167,7 @@ fn task_2(file: String) -> u32 {
             let engine = Engine {
                 number: str.parse::<i32>().expect("Error trying to parse number"),
                 start,
-                end: (str.len() - 1) as i32,
+                end: (line.len() - 1) as i32,
             };
             engines[y].push(engine);
         }
