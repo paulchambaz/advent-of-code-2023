@@ -1,6 +1,7 @@
 use std::env;
 use std::process;
 use std::fs;
+use std::time::Instant;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -10,14 +11,18 @@ fn main() {
     }
 
     let path = &args[1];
-
     let file = fs::read_to_string(path).expect("Error, could not read file");
 
-    let sum_1 = task_1(file.clone());
-    let sum_2 = task_2(file);
+    let start = Instant::now();
 
-    println!("Sum: {}", sum_1);
-    println!("Sum: {}", sum_2);
+    let task_1 = task_1(file.clone());
+    let task_2 = task_2(file);
+
+    let duration = start.elapsed();
+
+    println!("Task 1: {}", task_1);
+    println!("Task 2: {}", task_2);
+    println!("Time: {} µs", duration.as_micros());
 }
 
 fn task_1(file: String) -> u32 {
