@@ -2,6 +2,8 @@ use std::env;
 use std::process;
 use std::fs;
 use std::time::Instant;
+use std::collections::HashMap;
+use std::fmt;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -27,12 +29,189 @@ fn main() {
     println!("Time: {} µs", duration.as_micros());
 }
 
+#[derive(Debug)]
+enum Direction {
+    Left,
+    Right,
+}
+
+impl fmt::Display for Direction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Direction::Left => write!(f, "Left"),
+            Direction::Right => write!(f, "Right"),
+        }
+    }
+}
+
+struct NodeStr {
+    left: String,
+    right: String,
+}
+
+#[derive(Debug)]
+struct Node {
+    left: usize,
+    right: usize,
+}
+
+fn apply_direction(start: usize, directions: &Vec<Direction>, nodes: &Vec<Node>) -> usize {
+    let mut next = start;
+    for direction in directions {
+        match direction {
+            Direction::Left => {
+                next = nodes[next].left;
+            },
+            Direction::Right => {
+                next = nodes[next].right;
+            },
+        };
+    }
+    next
+}
+
 fn task_1(file: String) -> u32 {
-    0
+    let n = file.lines().count();
+    let mut labels: HashMap<String, usize> = HashMap::with_capacity(n - 2);
+    let mut directions: Vec<Direction> = Vec::new();
+    let mut nodes_str: Vec<NodeStr> = Vec::with_capacity(n - 2);
+    for (i, line) in file.lines().enumerate() {
+        if i == 0 {
+            for char in line.chars() {
+                let direction = match char {
+                    'L' => Direction::Left,
+                    'R' => Direction::Right,
+                    _ => Direction::Left,
+                };
+                directions.push(direction);
+            }
+        } else if i == 1 {
+            continue;
+        } else {
+            labels.insert(line[0..3].to_string(), i - 2);
+            nodes_str.push(NodeStr { left: line[7..10].to_string(), right: line[12..15].to_string() });
+        }
+    }
+    let mut nodes: Vec<Node> = Vec::with_capacity(n - 2);
+    for node in &nodes_str {
+        let left = match labels.get(&node.left) {
+            Some(left) => *left,
+            _ => 0,
+        };
+        let right = match labels.get(&node.right) {
+            Some(right) => *right,
+            _ => 0,
+        };
+        nodes.push(Node {
+            left,
+            right,
+        });
+    }
+    let start = match labels.get("AAA") {
+        Some(start) => *start,
+        _ => 0,
+    };
+
+    let end = match labels.get("ZZZ") {
+        Some(end) => *end,
+        _ => 0,
+    };
+
+    let mut count = 0;
+    let mut current = start;
+    while current != end {
+        current = apply_direction(current, &directions, &nodes);
+        count += 1;
+    }
+
+    (count * directions.len()) as u32
+}
+
+fn check_all_done(currents: &Vec<usize>, ends: &Vec<usize>) -> bool {
+    for current in currents {
+        if !ends.contains(current) {
+            return false;
+        }
+    }
+    true
 }
 
 fn task_2(file: String) -> u32 {
-    0
+    let n = file.lines().count();
+    let mut labels: HashMap<String, usize> = HashMap::with_capacity(n - 2);
+    let mut directions: Vec<Direction> = Vec::new();
+    let mut nodes_str: Vec<NodeStr> = Vec::with_capacity(n - 2);
+    for (i, line) in file.lines().enumerate() {
+        if i == 0 {
+            for char in line.chars() {
+                let direction = match char {
+                    'L' => Direction::Left,
+                    'R' => Direction::Right,
+                    _ => Direction::Left,
+                };
+                directions.push(direction);
+            }
+        } else if i == 1 {
+            continue;
+        } else {
+            labels.insert(line[0..3].to_string(), i - 2);
+            nodes_str.push(NodeStr { left: line[7..10].to_string(), right: line[12..15].to_string() });
+        }
+    }
+    let mut nodes: Vec<Node> = Vec::with_capacity(n - 2);
+    for node in &nodes_str {
+        let left = match labels.get(&node.left) {
+            Some(left) => *left,
+            _ => 0,
+        };
+        let right = match labels.get(&node.right) {
+            Some(right) => *right,
+            _ => 0,
+        };
+        nodes.push(Node {
+            left,
+            right,
+        });
+    }
+    let starts: Vec<usize> = labels
+        .iter()
+        .filter_map(|(key, &value)| {
+            if key.chars().nth(2) == Some('A') {
+                Some(value)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let ends: Vec<usize> = labels
+        .iter()
+        .filter_map(|(key, &value)| {
+            if key.chars().nth(2) == Some('Z') {
+                println!("{} {}", key, value);
+                Some(value)
+            } else {
+                None
+            }
+        })
+        .collect();
+    //
+    // println!("{:?}", ends);
+
+    // return 0;
+    let mut currents: Vec<usize> = starts;
+    let mut count = 0;
+    while !check_all_done(&currents, &ends) {
+        for current in currents.iter_mut() {
+            *current = apply_direction(*current, &directions, &nodes);
+        }
+        count += 1;
+        println!("count: {}, currents: {:?}, ends: {:?}", count, currents, ends);
+    }
+
+    println!("{}", count);
+
+    (count * directions.len()) as u32
 }
 
 #[cfg(test)]
@@ -50,10 +229,12 @@ mod tests {
     fn task_1_test() {
         task_test("test1a", task_1, 2);
         task_test("test1b", task_1, 6);
+        task_test("input", task_1, 18727);
     }
 
     #[test]
     fn task_2_test() {
-        task_test("test1b", task_2, 0);
+        task_test("test2", task_2, 6);
+        // task_test("input", task_2, 0);
     }
 }
