@@ -12,25 +12,25 @@ fn main() {
 
     let path = &args[1];
     let file = fs::read_to_string(path).expect("Error, could not read file");
+    let file_1 = file.clone();
+    let file_2 = file.clone();
 
     let start = Instant::now();
 
-    let task_1 = task_1(file.clone());
-    let task_2 = task_2(file);
+    let res_1 = task_1(file_1);
+    let res_2 = task_2(file_2);
 
     let duration = start.elapsed();
 
-    println!("Task 1: {}", task_1);
-    println!("Task 2: {}", task_2);
+    println!("Task 1: {}", res_1);
+    println!("Task 2: {}", res_2);
     println!("Time: {} µs", duration.as_micros());
 }
 
 fn task_1(file: String) -> u32 {
     let mut sum = 0;
-    for line in file.lines() {
+    for (i, line) in file.lines().enumerate() {
         let begin = line.find(':').expect("Could not find ':'");
-        let end = line.find(' ').expect("Could not find ' '");
-        let game = line.get(end + 1..begin).expect("Slice out of bound").parse::<u32>().expect("Could not parse game");
         let parts = line.get(begin + 1..).expect("Slice out of bound");
 
         let mut red = 0;
@@ -50,11 +50,11 @@ fn task_1(file: String) -> u32 {
         }
 
         if red <= 12 && green <= 13 && blue <= 14 {
-            sum += game;
+            sum += i + 1;
         }
     }
 
-    sum
+    sum as u32
 }
 
 fn task_2(file: String) -> u32 {
@@ -69,21 +69,41 @@ fn task_2(file: String) -> u32 {
         for game in parts.split(';') {
             for draw in game.split(',') {
                 let subparts: Vec<&str> = draw.split(' ').collect();
-                let value = subparts.get(1).expect("Could not get value string").parse::<u32>().expect("Could not parse value");
-                let color = subparts.get(2).expect("Could not get color string");
-                match *color {
+                let value = subparts[1].parse::<u32>().expect("Could not parse value");
+                match subparts[2] {
                     "red" => if value > red { red = value },
                     "green" => if value > green { green = value },
                     "blue" => if value > blue { blue = value },
-                    _ => panic!("Could not match color"),
+                    _ => panic!("Could not parse color"),
                 };
             }
         }
 
-        let power = red * green * blue;
+        sum += red * green * blue;
+    }
+    sum
+}
 
-        sum += power;
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use super::{task_1, task_2};
+
+    fn task_test(path: &str, task: fn(String) -> u32, result: u32) {
+        let file = fs::read_to_string(path).expect("Error, could not read file");
+        let res = task(file);
+        assert_eq!(res, result);
     }
 
-    sum
+    #[test]
+    fn task_1_test() {
+        task_test("test", task_1, 8);
+        task_test("input", task_1, 2149);
+    }
+
+    #[test]
+    fn task_2_test() {
+        task_test("test", task_2, 2286);
+        task_test("input", task_2, 71274);
+    }
 }

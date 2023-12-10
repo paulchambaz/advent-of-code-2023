@@ -12,47 +12,40 @@ fn main() {
 
     let path = &args[1];
     let file = fs::read_to_string(path).expect("Error, could not read file");
+    let file_1 = file.clone();
+    let file_2 = file.clone();
 
     let start = Instant::now();
 
-    let task_1 = task_1(file.clone());
-    let task_2 = task_2(file);
+    let res_1 = task_1(file_1);
+    let res_2 = task_2(file_2);
 
     let duration = start.elapsed();
 
-    println!("Task 1: {}", task_1);
-    println!("Task 2: {}", task_2);
+    println!("Task 1: {}", res_1);
+    println!("Task 2: {}", res_2);
     println!("Time: {} µs", duration.as_micros());
 }
 
 fn task_1(file: String) -> u32 {
     let mut sum = 0;
-
     for line in file.lines() {
-        let parts: Vec<&str> = line.split_once(':').map(|(_, rest)| rest.split('|').collect()).unwrap_or_default();
-        
-        let mut winnings: Vec<u32> = parts.first().expect("Could not parse winning numbers")
-            .split_whitespace()
-            .map(|s| s.parse::<u32>().expect("Could not parse winning numbers"))
-            .collect();
-        winnings.sort();
+        let (left, right) = line.split_at(line.find('|').expect("Could not find delimeter"));
 
-        let mut numbers: Vec<u32> = parts.get(1).expect("Could not parse winning numbers")
+        let winnings: Vec<u32> = left
             .split_whitespace()
-            .map(|s| s.parse::<u32>().expect("Could not parse winning numbers"))
+            .filter_map(|s| s.parse::<u32>().ok())
             .collect();
-        numbers.sort();
 
-        let mut start = 0;
+        let numbers: Vec<u32> = right
+            .split_whitespace()
+            .filter_map(|s| s.parse::<u32>().ok())
+            .collect();
+
         let mut score = 0;
-        for winning in winnings {
-            if let Ok(index) =  numbers[start..].binary_search(&winning) {
-                start = index;
-                if score == 0 {
-                    score = 1;
-                } else {
-                    score *= 2;
-                }
+        for number in numbers {
+            if winnings.contains(&number) {
+                score = if score == 0 { 1 } else { score * 2 };
             }
         }
 
@@ -63,45 +56,58 @@ fn task_1(file: String) -> u32 {
 }
 
 fn task_2(file: String) -> u32 {
-    let n = file.lines().count() as u32;
-    let mut scores: Vec<usize> = Vec::with_capacity(n as usize);
-    for line in file.lines() {
-        let parts: Vec<&str> = line.split_once(':').map(|(_, rest)| rest.split('|').collect()).unwrap_or_default();
-        
-        let mut winnings: Vec<u32> = parts.first().expect("Could not parse winning numbers")
-            .split_whitespace()
-            .map(|s| s.parse::<u32>().expect("Could not parse winning numbers"))
-            .collect();
-        winnings.sort();
+    let n = file.lines().count();
+    let mut counter: Vec<u32> = vec![1; n];
+    for (i, line) in file.lines().enumerate() {
+        let (left, right) = line.split_at(line.find('|').expect("Could not find delimeter"));
 
-        let mut numbers: Vec<u32> = parts.get(1).expect("Could not parse winning numbers")
+        let winnings: Vec<u32> = left
             .split_whitespace()
-            .map(|s| s.parse::<u32>().expect("Could not parse winning numbers"))
+            .filter_map(|s| s.parse::<u32>().ok())
             .collect();
-        numbers.sort();
 
-        let mut start = 0;
+        let numbers: Vec<u32> = right
+            .split_whitespace()
+            .filter_map(|s| s.parse::<u32>().ok())
+            .collect();
+
         let mut score = 0;
-        for winning in winnings {
-            if let Ok(index) =  numbers[start..].binary_search(&winning) {
-                start = index;
+        for number in numbers {
+            if winnings.contains(&number) {
                 score += 1;
             }
         }
 
-        scores.push(score);
-    }
-    
-    let mut counter: Vec<usize> = vec![1; n as usize];
-    for (i, score) in scores.into_iter().enumerate() {
-        for n in 0..score {
-            let index: usize = n + i + 1;
-            counter[index] += counter[i];
+        let value = counter[i];
+        let slice = &mut counter[i + 1..n.min(score + i + 1)];
+        for counter_val in slice {
+            *counter_val += value;
         }
-        
     }
 
-    let sum: usize = counter.iter().sum();
+    counter.iter().sum()
+}
 
-    sum as u32
+#[cfg(test)]
+mod tests {
+    use std::fs;
+    use super::{task_1, task_2};
+
+    fn task_test(path: &str, task: fn(String) -> u32, result: u32) {
+        let file = fs::read_to_string(path).expect("Error, could not read file");
+        let res = task(file);
+        assert_eq!(res, result);
+    }
+
+    #[test]
+    fn task_1_test() {
+        task_test("test", task_1, 13);
+        task_test("input", task_1, 21138);
+    }
+
+    #[test]
+    fn task_2_test() {
+        task_test("test", task_2, 30);
+        task_test("input", task_2, 7185540);
+    }
 }
