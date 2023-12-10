@@ -55,7 +55,7 @@ struct Node {
     right: usize,
 }
 
-fn apply_direction(start: usize, directions: &Vec<Direction>, nodes: &Vec<Node>) -> usize {
+fn apply_direction(start: usize, directions: &Vec<Direction>, nodes: &[Node]) -> usize {
     let mut next = start;
     for direction in directions {
         match direction {
@@ -70,11 +70,13 @@ fn apply_direction(start: usize, directions: &Vec<Direction>, nodes: &Vec<Node>)
     next
 }
 
+            // nicewigg
 fn task_1(file: String) -> u32 {
     let n = file.lines().count();
-    let mut labels: HashMap<String, usize> = HashMap::with_capacity(n - 2);
+    let n = n - 2;
+    let mut labels: HashMap<String, usize> = HashMap::with_capacity(n);
     let mut directions: Vec<Direction> = Vec::new();
-    let mut nodes_str: Vec<NodeStr> = Vec::with_capacity(n - 2);
+    let mut nodes_str: Vec<NodeStr> = Vec::with_capacity(n);
     for (i, line) in file.lines().enumerate() {
         if i == 0 {
             for char in line.chars() {
@@ -92,7 +94,7 @@ fn task_1(file: String) -> u32 {
             nodes_str.push(NodeStr { left: line[7..10].to_string(), right: line[12..15].to_string() });
         }
     }
-    let mut nodes: Vec<Node> = Vec::with_capacity(n - 2);
+    let mut nodes: Vec<Node> = Vec::with_capacity(n);
     for node in &nodes_str {
         let left = match labels.get(&node.left) {
             Some(left) => *left,
@@ -107,6 +109,12 @@ fn task_1(file: String) -> u32 {
             right,
         });
     }
+
+    let mut iterations: Vec<usize> = Vec::with_capacity(n);
+    for i in 0..n {
+        iterations.push(apply_direction(i, &directions, &nodes));
+    }
+
     let start = match labels.get("AAA") {
         Some(start) => *start,
         _ => 0,
@@ -120,27 +128,19 @@ fn task_1(file: String) -> u32 {
     let mut count = 0;
     let mut current = start;
     while current != end {
-        current = apply_direction(current, &directions, &nodes);
+        current = iterations[current];
         count += 1;
     }
 
     (count * directions.len()) as u32
 }
 
-fn check_all_done(currents: &Vec<usize>, ends: &Vec<usize>) -> bool {
-    for current in currents {
-        if !ends.contains(current) {
-            return false;
-        }
-    }
-    true
-}
-
-fn task_2(file: String) -> u32 {
+fn task_2(file: String) -> u64 {
     let n = file.lines().count();
-    let mut labels: HashMap<String, usize> = HashMap::with_capacity(n - 2);
+    let n = n - 2;
+    let mut labels: HashMap<String, usize> = HashMap::with_capacity(n);
     let mut directions: Vec<Direction> = Vec::new();
-    let mut nodes_str: Vec<NodeStr> = Vec::with_capacity(n - 2);
+    let mut nodes_str: Vec<NodeStr> = Vec::with_capacity(n);
     for (i, line) in file.lines().enumerate() {
         if i == 0 {
             for char in line.chars() {
@@ -173,45 +173,40 @@ fn task_2(file: String) -> u32 {
             right,
         });
     }
-    let starts: Vec<usize> = labels
-        .iter()
-        .filter_map(|(key, &value)| {
-            if key.chars().nth(2) == Some('A') {
-                Some(value)
-            } else {
-                None
-            }
-        })
-        .collect();
+
+    let mut iterations: Vec<usize> = Vec::with_capacity(n);
+    for i in 0..n {
+        iterations.push(apply_direction(i, &directions, &nodes));
+    }
 
     let ends: Vec<usize> = labels
         .iter()
         .filter_map(|(key, &value)| {
             if key.chars().nth(2) == Some('Z') {
-                println!("{} {}", key, value);
                 Some(value)
             } else {
                 None
             }
         })
         .collect();
-    //
-    // println!("{:?}", ends);
 
-    // return 0;
-    let mut currents: Vec<usize> = starts;
-    let mut count = 0;
-    while !check_all_done(&currents, &ends) {
-        for current in currents.iter_mut() {
-            *current = apply_direction(*current, &directions, &nodes);
+    let mut cycles = Vec::with_capacity(n);
+    for end in &ends {
+        let mut count = 0;
+        let mut current = *end;
+        loop {
+            current = iterations[current];
+            count += 1;
+            if current == *end {
+                break;
+            }
         }
-        count += 1;
-        println!("count: {}, currents: {:?}, ends: {:?}", count, currents, ends);
+        cycles.push(count);
     }
 
-    println!("{}", count);
+    let len = cycles.iter().product::<usize>();
 
-    (count * directions.len()) as u32
+    (len * directions.len()) as u64
 }
 
 #[cfg(test)]
@@ -234,7 +229,12 @@ mod tests {
 
     #[test]
     fn task_2_test() {
-        task_test("test2", task_2, 6);
-        // task_test("input", task_2, 0);
+        let file = fs::read_to_string("test2").expect("Error, could not read file");
+        let res = task_2(file);
+        assert_eq!(res, 6);
+
+        let file = fs::read_to_string("input").expect("Error, could not read file");
+        let res = task_2(file);
+        assert_eq!(res, 18024643846273);
     }
 }
