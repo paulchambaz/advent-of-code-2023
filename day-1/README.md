@@ -1,5 +1,6 @@
-\--- Day 1: Trebuchet?! ---
-----------
+# Day 1: Trebuchet?!
+
+## Part One
 
 Something is wrong with global snow production, and you've been selected to take a look. The Elves have even given you a map; on it, they've used stars to mark the top fifty locations that are likely to be having problems.
 
@@ -29,8 +30,7 @@ Consider your entire calibration document. *What is the sum of all of the calibr
 
 Your puzzle answer was `55538`.
 
-\--- Part Two ---
-----------
+## Part Two
 
 Your calculation isn't quite right. It looks like some of the digits are actually *spelled out with letters*: `one`, `two`, `three`, `four`, `five`, `six`, `seven`, `eight`, and `nine` *also* count as valid "digits".
 

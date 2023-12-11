@@ -1,5 +1,6 @@
-\--- Day 8: Haunted Wasteland ---
-----------
+# Day 8: Haunted Wasteland
+
+## Part One
 
 You're still riding a camel across Desert Island when you spot a sandstorm quickly approaching. When you turn to warn the Elf, she disappears before your eyes! To be fair, she had just finished warning you about *ghosts* a few minutes ago.
 
@@ -41,8 +42,7 @@ Starting at `AAA`, follow the left/right instructions. *How many steps are requi
 
 Your puzzle answer was `18727`.
 
-\--- Part Two ---
-----------
+## Part Two
 
 The sandstorm is upon you and you aren't any closer to escaping the wasteland. You had the camel follow the instructions, but you've barely left your starting position. It's going to take *significantly more steps* to escape!
 

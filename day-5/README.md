@@ -1,5 +1,6 @@
-\--- Day 5: If You Give A Seed A Fertilizer ---
-----------
+# Day 5: If You Give A Seed A Fertilizer
+
+## Part One
 
 You take the boat and find the gardener right where you were told he would be: managing a giant "garden" that looks more to you like a farm.
 
@@ -111,8 +112,7 @@ So, the lowest location number in this example is `*35*`.
 
 Your puzzle answer was `510109797`.
 
-\--- Part Two ---
-----------
+## Part Two
 
 Everyone will starve if you only plant such a small number of seeds. Re-reading the almanac, it looks like the `seeds:` line actually describes *ranges of seed numbers*.
 

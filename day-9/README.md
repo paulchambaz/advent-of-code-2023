@@ -1,8 +1,6 @@
 # Day 9: Mirage Maintenance
 
----
 ## Part One
----
 
 You ride the camel through the sandstorm and stop where the ghost's maps told you to stop. The sandstorm subsequently subsides, somehow seeing you standing at an *oasis*!
 
@@ -102,9 +100,7 @@ Analyze your OASIS report and extrapolate the next value for each history. *What
 
 Your puzzle answer was `1969958987`.
 
----
 ## Part Two
----
 
 Of course, it would be nice to have *even more history* included in your report. Surely it's safe to just *extrapolate backwards* as well, right?
 

@@ -1,5 +1,6 @@
-\--- Day 3: Gear Ratios ---
-----------
+# Day 3: Gear Ratios
+
+## Part One
 
 You and the Elf eventually reach a [gondola lift](https://en.wikipedia.org/wiki/Gondola_lift) station; he says the gondola lift will take you up to the *water source*, but this is as far as he can bring you. You go inside.
 
@@ -35,8 +36,7 @@ Of course, the actual engine schematic is much larger. *What is the sum of all o
 
 Your puzzle answer was `537732`.
 
-\--- Part Two ---
-----------
+## Part Two
 
 The engineer finds the missing part and installs it in the engine! As the engine springs to life, you jump in the closest gondola, finally ready to ascend to the water source.
 
