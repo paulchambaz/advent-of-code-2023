@@ -4,6 +4,7 @@ use std::fs;
 use std::time::Instant;
 use std::collections::HashMap;
 use std::fmt;
+use num::integer::lcm;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -201,12 +202,12 @@ fn task_2(file: String) -> u64 {
                 break;
             }
         }
-        cycles.push(count);
+        cycles.push(count as u64);
     }
 
-    let len = cycles.iter().product::<usize>();
+    let lcm_result = cycles.iter().fold(1, |acc, &num| lcm(acc, num));
 
-    (len * directions.len()) as u64
+    lcm_result * directions.len() as u64
 }
 
 #[cfg(test)]
