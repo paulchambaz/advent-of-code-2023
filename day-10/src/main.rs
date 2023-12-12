@@ -1,0 +1,546 @@
+use std::env;
+use std::fs;
+use std::process;
+use std::time::Instant;
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} [path]", args[0]);
+        process::exit(1);
+    }
+
+    let path = &args[1];
+    let file = fs::read_to_string(path).expect("Error, could not read file");
+    let file_1 = file.clone();
+    let file_2 = file.clone();
+
+    let start = Instant::now();
+
+    let res_1 = task_1(file_1);
+    let res_2 = task_2(file_2);
+
+    let duration = start.elapsed();
+
+    let seg1 = Segment { start_x: 0.5, start_y: 4.5, end_x: 0.5, end_y: 3.5 };
+    let seg2 = Segment { start_x: 0.0, start_y: 4.0, end_x: 1.0, end_y: 4.0 };
+    let result = segment_intersect(seg1, seg2);
+    println!("{}", result);
+
+    println!("Task 1: {}", res_1);
+    println!("Task 2: {}", res_2);
+    println!("Time: {} µs", duration.as_micros());
+}
+
+#[derive(PartialEq, Copy, Clone, Debug)]
+enum Direction {
+    North,
+    South,
+    West,
+    East,
+}
+
+#[derive(Copy, Clone, Debug)]
+struct Node {
+    a: Direction,
+    b: Direction,
+}
+
+#[derive(Copy, Clone, Debug)]
+struct Point {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Copy, Clone, Debug)]
+struct Segment {
+    start_x: f32,
+    start_y: f32,
+    end_x: f32,
+    end_y: f32,
+}
+
+#[derive(Copy, Clone, Debug)]
+struct Searcher {
+    searching: bool,
+    location: Point,
+    coming_from: Direction,
+    count: u32,
+}
+
+struct MazeSearcher {
+    searching: bool,
+    location: Point,
+    coming_from: Direction,
+    count: u32,
+    graph: Vec<Point>,
+}
+
+fn same_point(searchers: &[Searcher]) -> Option<u32> {
+    for (i, searcher1) in searchers.iter().enumerate() {
+        for searcher2 in &searchers[i + 1..] {
+            if searcher1.location.x == searcher2.location.x
+                && searcher1.location.y == searcher2.location.y
+            {
+                return Some(u32::min(searcher1.count, searcher2.count));
+            }
+        }
+    }
+    None
+}
+
+fn get_node(
+    point: Point,
+    start: Point,
+    maze: &[Vec<Option<Node>>],
+    width: usize,
+    height: usize,
+) -> Option<Node> {
+
+    if point.y < 0 || point.y >= height as i32 || point.x < 0 || point.x >= width as i32 {
+        return None;
+    }
+
+    maze[point.y as usize][point.x as usize]
+}
+
+fn segment_intersect(vertical: Segment, horizontal: Segment) -> bool {
+    // println!("{:?} {:?}", vertical, horizontal);
+    let ax = vertical.start_x;
+    let asy;
+    let aey;
+    if vertical.start_y < vertical.end_y {
+        asy = vertical.start_y;
+        aey = vertical.end_y;
+    } else {
+        asy = vertical.end_y;
+        aey = vertical.start_y;
+    }
+    let bsx;
+    let bex;
+    if horizontal.start_x < horizontal.end_x {
+        bsx = horizontal.start_x;
+        bex = horizontal.end_x;
+    } else {
+        bsx = horizontal.end_x;
+        bex = horizontal.start_x;
+    }
+    let by = horizontal.start_y;
+
+
+    if by < asy || by > aey {
+        return false;
+    }
+
+    if ax < bsx || ax > bex {
+        return false;
+    }
+
+    true
+}
+
+fn task_1(file: String) -> u32 {
+    let height = file.lines().count();
+    let mut width = 0;
+    let mut maze: Vec<Vec<Option<Node>>> = Vec::with_capacity(height);
+    let mut start: Option<Point> = None;
+    for (y, line) in file.lines().enumerate() {
+        // println!("{:?}", line);
+        width = line.len();
+        let mut maze_line: Vec<Option<Node>> = Vec::with_capacity(height);
+        for (x, char) in line.chars().enumerate() {
+            match char {
+                '|' => maze_line.push(Some(Node {
+                    a: Direction::North,
+                    b: Direction::South,
+                })),
+                '-' => maze_line.push(Some(Node {
+                    a: Direction::West,
+                    b: Direction::East,
+                })),
+                'L' => maze_line.push(Some(Node {
+                    a: Direction::North,
+                    b: Direction::East,
+                })),
+                'J' => maze_line.push(Some(Node {
+                    a: Direction::North,
+                    b: Direction::West,
+                })),
+                '7' => maze_line.push(Some(Node {
+                    a: Direction::South,
+                    b: Direction::West,
+                })),
+                'F' => maze_line.push(Some(Node {
+                    a: Direction::South,
+                    b: Direction::East,
+                })),
+                'S' => {
+                    maze_line.push(None);
+                    start = Some(Point {
+                        x: x as i32,
+                        y: y as i32,
+                    });
+                }
+                '.' => maze_line.push(None),
+                _ => continue,
+            };
+        }
+        maze.push(maze_line);
+    }
+    let start = match start {
+        Some(s) => s,
+        _ => panic!("Could not find the start"),
+    };
+
+    let mut searchers: Vec<Searcher> = vec![
+        Searcher {
+            searching: true,
+            location: Point {
+                x: start.x,
+                y: start.y + 1,
+            },
+            coming_from: Direction::North,
+            count: 1,
+        },
+        Searcher {
+            searching: true,
+            location: Point {
+                x: start.x,
+                y: start.y - 1,
+            },
+            coming_from: Direction::South,
+            count: 1,
+        },
+        Searcher {
+            searching: true,
+            location: Point {
+                x: start.x + 1,
+                y: start.y,
+            },
+            coming_from: Direction::West,
+            count: 1,
+        },
+        Searcher {
+            searching: true,
+            location: Point {
+                x: start.x - 1,
+                y: start.y,
+            },
+            coming_from: Direction::East,
+            count: 1,
+        },
+    ];
+
+    loop {
+        for searcher in searchers.iter_mut() {
+            if !searcher.searching {
+                continue;
+            }
+
+            if searcher.location.x == start.x && searcher.location.y == start.y {
+                return searcher.count / 2;
+            }
+
+            let node = match get_node(searcher.location, start, &maze, width, height) {
+                Some(n) => n,
+                _ => {
+                    searcher.searching = false;
+                    continue;
+                }
+            };
+
+            let mut new_direction = if searcher.coming_from == node.a {
+                node.b
+            } else if searcher.coming_from == node.b {
+                node.a
+            } else {
+                searcher.searching = false;
+                continue;
+            };
+            new_direction = match new_direction {
+                Direction::North => Direction::South,
+                Direction::South => Direction::North,
+                Direction::West => Direction::East,
+                Direction::East => Direction::West,
+            };
+
+            let new_location = match new_direction {
+                Direction::North => Point {
+                    x: searcher.location.x,
+                    y: searcher.location.y + 1,
+                },
+                Direction::South => Point {
+                    x: searcher.location.x,
+                    y: searcher.location.y - 1,
+                },
+                Direction::West => Point {
+                    x: searcher.location.x + 1,
+                    y: searcher.location.y,
+                },
+                Direction::East => Point {
+                    x: searcher.location.x - 1,
+                    y: searcher.location.y,
+                },
+            };
+
+            searcher.location = new_location;
+            searcher.coming_from = new_direction;
+            searcher.count += 1;
+        }
+    }
+}
+
+fn task_2(file: String) -> u32 {
+    let height = file.lines().count();
+    let mut width = 0;
+    let mut maze: Vec<Vec<Option<Node>>> = Vec::with_capacity(height);
+    let mut start: Option<Point> = None;
+    for (y, line) in file.lines().enumerate() {
+        // println!("{:?}", line);
+        width = line.len();
+        let mut maze_line: Vec<Option<Node>> = Vec::with_capacity(height);
+        for (x, char) in line.chars().enumerate() {
+            match char {
+                '|' => maze_line.push(Some(Node {
+                    a: Direction::North,
+                    b: Direction::South,
+                })),
+                '-' => maze_line.push(Some(Node {
+                    a: Direction::West,
+                    b: Direction::East,
+                })),
+                'L' => maze_line.push(Some(Node {
+                    a: Direction::North,
+                    b: Direction::East,
+                })),
+                'J' => maze_line.push(Some(Node {
+                    a: Direction::North,
+                    b: Direction::West,
+                })),
+                '7' => maze_line.push(Some(Node {
+                    a: Direction::South,
+                    b: Direction::West,
+                })),
+                'F' => maze_line.push(Some(Node {
+                    a: Direction::South,
+                    b: Direction::East,
+                })),
+                'S' => {
+                    maze_line.push(None);
+                    start = Some(Point {
+                        x: x as i32,
+                        y: y as i32,
+                    });
+                }
+                '.' => maze_line.push(None),
+                _ => continue,
+            };
+        }
+        maze.push(maze_line);
+    }
+    let start = match start {
+        Some(s) => s,
+        _ => panic!("Could not find the start"),
+    };
+
+    let mut searchers: Vec<MazeSearcher> = vec![
+        MazeSearcher {
+            searching: true,
+            location: Point {
+                x: start.x,
+                y: start.y + 1,
+            },
+            coming_from: Direction::North,
+            count: 1,
+            graph: Vec::new(),
+        },
+        MazeSearcher {
+            searching: true,
+            location: Point {
+                x: start.x,
+                y: start.y - 1,
+            },
+            coming_from: Direction::South,
+            count: 1,
+            graph: Vec::new(),
+        },
+        MazeSearcher {
+            searching: true,
+            location: Point {
+                x: start.x + 1,
+                y: start.y,
+            },
+            coming_from: Direction::West,
+            count: 1,
+            graph: Vec::new(),
+        },
+        MazeSearcher {
+            searching: true,
+            location: Point {
+                x: start.x - 1,
+                y: start.y,
+            },
+            coming_from: Direction::East,
+            count: 1,
+            graph: Vec::new(),
+        },
+    ];
+
+    for searcher in searchers.iter_mut() {
+        searcher.graph.push(start);
+        searcher.graph.push(searcher.location);
+    }
+
+    let working_index;
+    'main_loop: loop {
+        for (i, searcher) in searchers.iter_mut().enumerate() {
+            if !searcher.searching {
+                continue;
+            }
+
+            if searcher.location.x == start.x && searcher.location.y == start.y {
+                working_index = i;
+                break 'main_loop;
+            }
+
+            let node = match get_node(searcher.location, start, &maze, width, height) {
+                Some(n) => n,
+                _ => {
+                    searcher.searching = false;
+                    continue;
+                }
+            };
+
+            let mut new_direction = if searcher.coming_from == node.a {
+                node.b
+            } else if searcher.coming_from == node.b {
+                node.a
+            } else {
+                searcher.searching = false;
+                continue;
+            };
+            new_direction = match new_direction {
+                Direction::North => Direction::South,
+                Direction::South => Direction::North,
+                Direction::West => Direction::East,
+                Direction::East => Direction::West,
+            };
+
+            let new_location = match new_direction {
+                Direction::North => Point {
+                    x: searcher.location.x,
+                    y: searcher.location.y + 1,
+                },
+                Direction::South => Point {
+                    x: searcher.location.x,
+                    y: searcher.location.y - 1,
+                },
+                Direction::West => Point {
+                    x: searcher.location.x + 1,
+                    y: searcher.location.y,
+                },
+                Direction::East => Point {
+                    x: searcher.location.x - 1,
+                    y: searcher.location.y,
+                },
+            };
+
+            searcher.location = new_location;
+            searcher.coming_from = new_direction;
+            searcher.count += 1;
+
+            searcher.graph.push(new_location);
+        }
+    }
+
+    let graph = (searchers[working_index].graph).clone();
+    // println!("{:?}", graph);
+    let mut lines = Vec::new();
+    for window in graph.windows(2) {
+        // println!();
+        // println!("{:?} {:?}", window[0], window[1]);
+        if window[1].x != window[0].x {
+            continue;
+        }
+        // println!("is valid");
+        let line = Segment {
+            start_x: window[0].x as f32 + 0.5,
+            start_y: window[0].y as f32 + 0.5,
+            end_x: window[1].x as f32 + 0.5,
+            end_y: window[1].y as f32 + 0.5,
+        };
+        // println!("{:?}", line);
+        lines.push(line);
+    }
+
+    let mut lines_col = Vec::with_capacity(width);
+    for _ in 0..width {
+        lines_col.push(Vec::new());
+    }
+    for line in &lines {
+        let x = (line.start_x - 0.5) as usize;
+        lines_col[x].push(line);
+    }
+
+    let mut counter = 0;
+    for y in 0..height {
+        let mut inside = false;
+        for x in 0..width {
+
+            let step = Segment {
+                start_x: x as f32,
+                start_y: y as f32,
+                end_x: x as f32 + 1.0,
+                end_y: y as f32,
+            };
+        
+            let mut intersect = false;
+            for line in &lines_col[x] {
+                if segment_intersect(**line, step) {
+                    intersect = true;
+                    break;
+                }
+            }
+
+            if intersect {
+                inside = !inside;
+                continue;
+            }
+
+            if inside {
+                // this is probably slow, but only happens to 305 items, so that may be ok?
+                let is_in_graph = graph.iter().any(|point| point.x == x as i32 && point.y == y as i32);
+                if is_in_graph {
+                    continue;
+                }
+                counter += 1;
+            }
+        }
+    }
+
+    counter
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{task_1, task_2};
+    use std::fs;
+
+    fn task_test(path: &str, task: fn(String) -> u32, result: u32) {
+        let file = fs::read_to_string(path).expect("Error, could not read file");
+        let res = task(file);
+        assert_eq!(res, result);
+    }
+
+    #[test]
+    fn task_1_test() {
+        task_test("test1", task_1, 8);
+        task_test("input", task_1, 6831);
+    }
+
+    #[test]
+    fn task_2_test() {
+        task_test("test2", task_2, 10);
+        task_test("input", task_2, 305);
+    }
+}
