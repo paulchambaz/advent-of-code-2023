@@ -1,5 +1,6 @@
-\--- Day 10: Pipe Maze ---
-----------
+# Day 10: Pipe Maze
+
+## Part One
 
 You use the hang glider to ride the hot air from Desert Island all the way up to the floating metal island. This island is surprisingly cold and there definitely aren't any thermals to glide on, so you leave your hang glider behind.
 
@@ -135,8 +136,7 @@ Your puzzle answer was `6831`.
 
 The first half of this puzzle is complete! It provides one gold star: \*
 
-\--- Part Two ---
-----------
+## Part Two
 
 You quickly reach the farthest point of the loop, but the animal never emerges. Maybe its nest is *within the area enclosed by the loop*?
 
