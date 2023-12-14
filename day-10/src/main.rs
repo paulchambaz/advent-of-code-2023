@@ -22,11 +22,6 @@ fn main() {
 
     let duration = start.elapsed();
 
-    let seg1 = Segment { start_x: 0.5, start_y: 4.5, end_x: 0.5, end_y: 3.5 };
-    let seg2 = Segment { start_x: 0.0, start_y: 4.0, end_x: 1.0, end_y: 4.0 };
-    let result = segment_intersect(seg1, seg2);
-    println!("{}", result);
-
     println!("Task 1: {}", res_1);
     println!("Task 2: {}", res_2);
     println!("Time: {} µs", duration.as_micros());
@@ -54,10 +49,10 @@ struct Point {
 
 #[derive(Copy, Clone, Debug)]
 struct Segment {
-    start_x: f32,
-    start_y: f32,
-    end_x: f32,
-    end_y: f32,
+    start_x: i32,
+    start_y: i32,
+    end_x: i32,
+    end_y: i32,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -76,22 +71,8 @@ struct MazeSearcher {
     graph: Vec<Point>,
 }
 
-fn same_point(searchers: &[Searcher]) -> Option<u32> {
-    for (i, searcher1) in searchers.iter().enumerate() {
-        for searcher2 in &searchers[i + 1..] {
-            if searcher1.location.x == searcher2.location.x
-                && searcher1.location.y == searcher2.location.y
-            {
-                return Some(u32::min(searcher1.count, searcher2.count));
-            }
-        }
-    }
-    None
-}
-
 fn get_node(
     point: Point,
-    start: Point,
     maze: &[Vec<Option<Node>>],
     width: usize,
     height: usize,
@@ -241,7 +222,7 @@ fn task_1(file: String) -> u32 {
                 return searcher.count / 2;
             }
 
-            let node = match get_node(searcher.location, start, &maze, width, height) {
+            let node = match get_node(searcher.location, &maze, width, height) {
                 Some(n) => n,
                 _ => {
                     searcher.searching = false;
@@ -403,7 +384,7 @@ fn task_2(file: String) -> u32 {
                 break 'main_loop;
             }
 
-            let node = match get_node(searcher.location, start, &maze, width, height) {
+            let node = match get_node(searcher.location, &maze, width, height) {
                 Some(n) => n,
                 _ => {
                     searcher.searching = false;
@@ -464,10 +445,10 @@ fn task_2(file: String) -> u32 {
         }
         // println!("is valid");
         let line = Segment {
-            start_x: window[0].x as f32 + 0.5,
-            start_y: window[0].y as f32 + 0.5,
-            end_x: window[1].x as f32 + 0.5,
-            end_y: window[1].y as f32 + 0.5,
+            start_x: window[0].x * 2 + 1,
+            start_y: window[0].y * 2 + 1,
+            end_x: window[1].x * 2 + 1,
+            end_y: window[1].y * 2 + 1,
         };
         // println!("{:?}", line);
         lines.push(line);
@@ -478,20 +459,25 @@ fn task_2(file: String) -> u32 {
         lines_col.push(Vec::new());
     }
     for line in &lines {
-        let x = (line.start_x - 0.5) as usize;
+        let x = ((line.start_x - 1) / 2) as usize;
         lines_col[x].push(line);
+    }
+
+    let mut maze_matrix: Vec<Vec<bool>> = vec![vec![false; width]; height];
+
+    for point in graph {
+        maze_matrix[point.y as usize][point.x as usize] = true;
     }
 
     let mut counter = 0;
     for y in 0..height {
         let mut inside = false;
         for x in 0..width {
-
             let step = Segment {
-                start_x: x as f32,
-                start_y: y as f32,
-                end_x: x as f32 + 1.0,
-                end_y: y as f32,
+                start_x: x as i32 * 2,
+                start_y: y as i32 * 2,
+                end_x: (x as i32 + 1) * 2,
+                end_y: y as i32 * 2,
             };
         
             let mut intersect = false;
@@ -508,9 +494,7 @@ fn task_2(file: String) -> u32 {
             }
 
             if inside {
-                // this is probably slow, but only happens to 305 items, so that may be ok?
-                let is_in_graph = graph.iter().any(|point| point.x == x as i32 && point.y == y as i32);
-                if is_in_graph {
+                if maze_matrix[y][x] {
                     continue;
                 }
                 counter += 1;
