@@ -34,8 +34,8 @@ fn distance(ax: i64, ay: i64, bx: i64, by: i64) -> i64 {
 fn task_1(file: String) -> i64 {
     let width = file.lines().count();
     let height = file.lines().next().map_or(0, |line| line.len());
-    let mut galaxies_x: Vec<i64> = Vec::with_capacity(height);
-    let mut galaxies_y: Vec<i64> = Vec::with_capacity(height);
+    let mut galaxies_x: Vec<i64> = Vec::with_capacity(height * 4);
+    let mut galaxies_y: Vec<i64> = Vec::with_capacity(height * 4);
     let mut empty_columns: Vec<bool> = vec![ true; width ];
     let mut empty_rows: Vec<bool> = vec![ true; height ];
     for (y, line) in file.lines().enumerate() {
@@ -76,8 +76,8 @@ fn task_1(file: String) -> i64 {
 fn task_2(file: String) -> i64 {
     let width = file.lines().count();
     let height = file.lines().next().map_or(0, |line| line.len());
-    let mut galaxies_x: Vec<i64> = Vec::with_capacity(height);
-    let mut galaxies_y: Vec<i64> = Vec::with_capacity(height);
+    let mut galaxies_x: Vec<i64> = Vec::with_capacity(height * 4);
+    let mut galaxies_y: Vec<i64> = Vec::with_capacity(height * 4);
     let mut empty_columns: Vec<bool> = vec![ true; width ];
     let mut empty_rows: Vec<bool> = vec![ true; height ];
     for (y, line) in file.lines().enumerate() {
