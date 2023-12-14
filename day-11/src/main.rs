@@ -27,21 +27,15 @@ fn main() {
     println!("Time: {} µs", duration.as_micros());
 }
 
-#[derive(Debug)]
-struct Point {
-    x: i64,
-    y: i64,
-}
-
-fn distance(a: &Point, b: &Point) -> i64 {
-    i64::abs(a.x - b.x) + i64::abs(a.y - b.y)
+fn distance(ax: i64, ay: i64, bx: i64, by: i64) -> i64 {
+    i64::abs(ax - bx) + i64::abs(ay - by)
 }
 
 fn task_1(file: String) -> i64 {
     let width = file.lines().count();
     let height = file.lines().next().map_or(0, |line| line.len());
-    println!("width: {}, height: {}", width, height);
-    let mut galaxies: Vec<Point> = Vec::new();
+    let mut galaxies_x: Vec<i64> = Vec::with_capacity(height);
+    let mut galaxies_y: Vec<i64> = Vec::with_capacity(height);
     let mut empty_columns: Vec<bool> = vec![ true; width ];
     let mut empty_rows: Vec<bool> = vec![ true; height ];
     for (y, line) in file.lines().enumerate() {
@@ -50,7 +44,8 @@ fn task_1(file: String) -> i64 {
                 '#' => { 
                     empty_columns[x] = false;
                     empty_rows[y] = false;
-                    galaxies.push(Point { x: x as i64, y: y as i64 });
+                    galaxies_x.push(x as i64);
+                    galaxies_y.push(y as i64);
                 },
                 _ => continue,
             }
@@ -60,16 +55,18 @@ fn task_1(file: String) -> i64 {
     let empty_rows: Vec<i64> = empty_rows.iter().scan(0, |count, &b| { if b { *count += 1; } Some(*count) }).collect();
     let empty_columns: Vec<i64> = empty_columns.iter().scan(0, |count, &b| { if b { *count += 1; } Some(*count) }).collect();
 
-    for galaxy in galaxies.iter_mut() {
-        galaxy.x += empty_columns[galaxy.x as usize];
-        galaxy.y += empty_rows[galaxy.y as usize];
+    let n_galaxy = galaxies_x.len();
+    for i in 0..n_galaxy {
+        galaxies_x[i] += empty_columns[galaxies_x[i] as usize];
+    }
+    for i in 0..n_galaxy {
+        galaxies_y[i] += empty_rows[galaxies_y[i] as usize];
     }
 
     let mut sum = 0;
-    for (i, galaxy1) in galaxies.iter().enumerate() {
-        for galaxy2 in galaxies.iter().skip(i + 1) {
-            let dist = distance(galaxy1, galaxy2);
-            sum += dist;
+    for i in 0..n_galaxy {
+        for j in i + 1..n_galaxy {
+            sum += distance(galaxies_x[i], galaxies_y[i], galaxies_x[j], galaxies_y[j]);
         }
     }
     
@@ -79,8 +76,8 @@ fn task_1(file: String) -> i64 {
 fn task_2(file: String) -> i64 {
     let width = file.lines().count();
     let height = file.lines().next().map_or(0, |line| line.len());
-    println!("width: {}, height: {}", width, height);
-    let mut galaxies: Vec<Point> = Vec::new();
+    let mut galaxies_x: Vec<i64> = Vec::with_capacity(height);
+    let mut galaxies_y: Vec<i64> = Vec::with_capacity(height);
     let mut empty_columns: Vec<bool> = vec![ true; width ];
     let mut empty_rows: Vec<bool> = vec![ true; height ];
     for (y, line) in file.lines().enumerate() {
@@ -89,7 +86,8 @@ fn task_2(file: String) -> i64 {
                 '#' => { 
                     empty_columns[x] = false;
                     empty_rows[y] = false;
-                    galaxies.push(Point { x: x as i64, y: y as i64 });
+                    galaxies_x.push(x as i64);
+                    galaxies_y.push(y as i64);
                 },
                 _ => continue,
             }
@@ -100,16 +98,18 @@ fn task_2(file: String) -> i64 {
     let empty_rows: Vec<i64> = empty_rows.iter().scan(0, |count, &b| { if b { *count += expansion - 1; } Some(*count) }).collect();
     let empty_columns: Vec<i64> = empty_columns.iter().scan(0, |count, &b| { if b { *count += expansion - 1; } Some(*count) }).collect();
 
-    for galaxy in galaxies.iter_mut() {
-        galaxy.x += empty_columns[galaxy.x as usize];
-        galaxy.y += empty_rows[galaxy.y as usize];
+    let n_galaxy = galaxies_x.len();
+    for i in 0..n_galaxy {
+        galaxies_x[i] += empty_columns[galaxies_x[i] as usize];
+    }
+    for i in 0..n_galaxy {
+        galaxies_y[i] += empty_rows[galaxies_y[i] as usize];
     }
 
     let mut sum = 0;
-    for (i, galaxy1) in galaxies.iter().enumerate() {
-        for galaxy2 in galaxies.iter().skip(i + 1) {
-            let dist = distance(galaxy1, galaxy2);
-            sum += dist;
+    for i in 0..n_galaxy {
+        for j in i + 1..n_galaxy {
+            sum += distance(galaxies_x[i], galaxies_y[i], galaxies_x[j], galaxies_y[j]);
         }
     }
     
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn task_2_test() {
-        task_test("test", task_2, 8410);
-        // task_test("input", task_2, 707505470642);
+        task_test("test", task_2, 82000210);
+        task_test("input", task_2, 707505470642);
     }
 }
