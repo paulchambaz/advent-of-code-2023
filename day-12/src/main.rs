@@ -40,27 +40,47 @@ fn is_pure(elements: &[char], start: usize) -> bool {
     true
 }
 
+fn count_potential(elements: &[char], start: usize) -> u64 {
+    let mut counter = 0;
+    for char in elements.iter().skip(start) {
+        if *char != '.' {
+            counter += 1;
+        }
+    }
+    counter
+}
+
 fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: usize, num_start: usize, num_end: usize, cache: &mut HashMap<String, u64>) -> u64 {
+    // recursive stop - no more elements
     if start >= end {
         return if num_start >= num_end { 1 } else { 0 };
     }
 
+    // recursive stop - no more numbers
     if num_start >= num_end {
         return if elements[start..end].contains(&'#') { 0 } else { 1 };
     }
 
-    if end - start < (numbers[num_start..].iter().sum::<u64>() as usize) + num_end - num_start - 1 {
+    // sum total of elements to place
+    let sum = numbers[num_start..].iter().sum::<u64>();
+
+    // if there are more elements to place than there is space for we can early exit
+    if end - start < sum as usize + num_end - num_start - 1 {
         return 0;
     }
-
+    // if there are more elements to place than there are potential space for we can early exit
+    if count_potential(elements, start) < sum {
+        return 0;
+    }
     
+    // access to the cache
     let key = format!("{:?}:{:?}", elements[start..].iter().collect::<String>().trim_matches('.'), &numbers[num_start..]);
+    // if we have already computed this value in a previous iteration we can early exit
     if let Some(&cached_result) = cache.get(&key) {
         return cached_result;
     }
 
-    // TODO: implement forward logic solver for simplification
-
+    // if we are left with a list of '?' we can compute the binomial coheficient and early exit
     if is_pure(elements, start) {
         let mut n = (end - start) as u64;
         let k = (num_end - num_start) as u64;
@@ -79,10 +99,13 @@ fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: u
     let mut result = 0;
 
     let first = elements[start];
+
+    // if the first character is . or ? we can recurse and ignore it
     if ".?".contains(first) {
         result += compute_combinations(elements, numbers, start + 1, end, num_start, num_end, cache);
     }
 
+    // if the first character is . or ? we can recurse search on the condition
     if "#?".contains(first) {
         let group = numbers[num_start] as usize;
 
@@ -91,6 +114,7 @@ fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: u
         }
     }
 
+    // now that we have the result, lets save it for later
     cache.insert(key, result);
 
     result
@@ -101,7 +125,7 @@ fn task_1(file: String) -> u64 {
     let mut sum = 0;
     for line in file.lines() {
         let parts: Vec<&str> = line.split_whitespace().collect();
-        let elements: Vec<char> = parts[0].chars().collect();
+        let elements: Vec<char> = parts[0].trim_matches('.').chars().collect();
         let numbers: Vec<u64>= parts[1].split(',').filter_map(
             |str| str.parse::<u64>().ok()
         ).collect();
@@ -131,6 +155,7 @@ fn task_2(file: String) -> u64 {
             .take(5)
             .collect::<Vec<&str>>()
             .join("?")
+            .trim_matches('.')
             .chars()
             .collect();
 
