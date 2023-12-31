@@ -1,8 +1,11 @@
+extern crate num_integer;
+
 use std::env;
 use std::process;
 use std::fs;
 use std::time::Instant;
 use std::collections::HashMap;
+use num_integer::binomial;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -28,6 +31,15 @@ fn main() {
     println!("Time: {} µs", duration.as_micros());
 }
 
+fn is_pure(elements: &[char], start: usize) -> bool {
+    for char in elements.iter().skip(start) {
+        if *char != '?' {
+            return false;
+        }
+    }
+    true
+}
+
 fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: usize, num_start: usize, num_end: usize, cache: &mut HashMap<String, u64>) -> u64 {
     if start >= end {
         return if num_start >= num_end { 1 } else { 0 };
@@ -36,10 +48,32 @@ fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: u
     if num_start >= num_end {
         return if elements[start..end].contains(&'#') { 0 } else { 1 };
     }
+
+    if end - start < (numbers[num_start..].iter().sum::<u64>() as usize) + num_end - num_start - 1 {
+        return 0;
+    }
+
     
     let key = format!("{:?}:{:?}", elements[start..].iter().collect::<String>().trim_matches('.'), &numbers[num_start..]);
     if let Some(&cached_result) = cache.get(&key) {
         return cached_result;
+    }
+
+    // TODO: implement forward logic solver for simplification
+
+    if is_pure(elements, start) {
+        let mut n = (end - start) as u64;
+        let k = (num_end - num_start) as u64;
+
+        for number in numbers.iter().skip(num_start) {
+            n -= number - 1;
+        }
+
+        n -= k - 1;
+
+        let result = binomial(n, k);
+        cache.insert(key, result);
+        return result;
     }
 
     let mut result = 0;
