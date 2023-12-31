@@ -50,6 +50,11 @@ fn count_potential(elements: &[char], start: usize) -> u64 {
     counter
 }
 
+
+fn create_key(elements: &[char], numbers: &[u64], start: usize, num_start: usize) -> String {
+    format!("{}{:?}", elements[start..].iter().collect::<String>().trim_matches('.'), &numbers[num_start..])
+}
+
 fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: usize, num_start: usize, num_end: usize, cache: &mut HashMap<String, u64>) -> u64 {
     // recursive stop - no more elements
     if start >= end {
@@ -68,17 +73,30 @@ fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: u
     if end - start < sum as usize + num_end - num_start - 1 {
         return 0;
     }
+    
     // if there are more elements to place than there are potential space for we can early exit
     if count_potential(elements, start) < sum {
         return 0;
     }
+
+    // trim over start
+    let mut start = start;
+    for element in elements.iter().skip(start) {
+        if *element != '.' {
+            break;
+        } else {
+            start += 1;
+        }
+    }
     
     // access to the cache
-    let key = format!("{:?}:{:?}", elements[start..].iter().collect::<String>().trim_matches('.'), &numbers[num_start..]);
+    let key = create_key(elements, numbers, start, num_start);
     // if we have already computed this value in a previous iteration we can early exit
     if let Some(&cached_result) = cache.get(&key) {
         return cached_result;
     }
+
+    // TODO - if formal logic arrives at an aswer of only 1 possible combination we can early exit
 
     // if we are left with a list of '?' we can compute the binomial coheficient and early exit
     if is_pure(elements, start) {
@@ -121,9 +139,9 @@ fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: u
 }
 
 fn task_1(file: String) -> u64 {
-    let mut cache: HashMap<String, u64> = HashMap::new();
     let mut sum = 0;
     for line in file.lines() {
+        let mut cache = HashMap::with_capacity(32);
         let parts: Vec<&str> = line.split_whitespace().collect();
         let elements: Vec<char> = parts[0].trim_matches('.').chars().collect();
         let numbers: Vec<u64>= parts[1].split(',').filter_map(
@@ -140,9 +158,9 @@ fn task_1(file: String) -> u64 {
 }
 
 fn task_2(file: String) -> u64 {
-    let mut cache: HashMap<String, u64> = HashMap::new();
     let mut sum = 0;
     for line in file.lines() {
+        let mut cache = HashMap::with_capacity(128);
         let parts: Vec<&str> = line.split_whitespace().collect();
         let elements_str: &str = parts[0];
         let numbers: Vec<u64> = parts[1]
