@@ -435,22 +435,17 @@ fn task_2(file: String) -> u32 {
     }
 
     let graph = (searchers[working_index].graph).clone();
-    // println!("{:?}", graph);
     let mut lines = Vec::new();
     for window in graph.windows(2) {
-        // println!();
-        // println!("{:?} {:?}", window[0], window[1]);
         if window[1].x != window[0].x {
             continue;
         }
-        // println!("is valid");
         let line = Segment {
             start_x: window[0].x * 2 + 1,
             start_y: window[0].y * 2 + 1,
             end_x: window[1].x * 2 + 1,
             end_y: window[1].y * 2 + 1,
         };
-        // println!("{:?}", line);
         lines.push(line);
     }
 

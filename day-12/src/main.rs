@@ -50,9 +50,72 @@ fn count_potential(elements: &[char], start: usize) -> u64 {
     counter
 }
 
+fn fits(elements: &[char], start: usize, end: usize, n: usize) -> bool {
+    for i in 0..n {
+        if i + start < end {
+            match elements[i + start] {
+                '#' => continue,
+                '?' => continue,
+                _ => return false,
+            }
+        }
+    }
+    if n + start < end {
+        match elements[n + start] {
+            '#' => return true,
+            '?' => return true,
+            _ => return false,
+        }
+    }
+    true
+}
 
-fn create_key(elements: &[char], numbers: &[u64], start: usize, num_start: usize) -> String {
-    format!("{}{:?}", elements[start..].iter().collect::<String>().trim_matches('.'), &numbers[num_start..])
+fn find_occurence(elements: &[char], start: usize, end: usize, n: usize) -> (usize, usize) {
+    let mut j = start;
+    let mut count = 0;
+    while j + n + 1 < end {
+        if fits(elements, start, end, n) {
+            count += 1;
+        } else if count != 0 {
+            break
+        }
+        j += 1;
+    }
+
+    (count, j)
+}
+
+fn formal_solve(elements: &[char], numbers: &[u64], start: usize, end: usize, num_start: usize, num_end: usize) -> Option<u64> {
+    let mut n = num_start;
+    let mut start = start;
+    while n < num_end {
+        start = trim(elements, start);
+        let num = if n < num_end { numbers[n] + 1 } else { numbers[n] } as usize;
+        let (count, j) = find_occurence(elements, start, end, num);
+        if count == 1 {
+            // start = j - 1 + num;
+            n += 1
+        } else {
+            return None
+        }
+    }
+    Some(1)
+}
+
+fn trim(elements: &[char], start: usize) -> usize {
+    let mut start = start;
+    for element in elements.iter().skip(start) {
+        if *element != '.' {
+            break;
+        } else {
+            start += 1;
+        }
+    }
+    start
+}
+
+fn create_key(elements: &[char], numbers: &[u64], start: usize, end: usize, num_start: usize, num_end: usize) -> String {
+    format!("{}{:?}", elements[start..end].iter().collect::<String>().trim_matches('.'), &numbers[num_start..num_end])
 }
 
 fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: usize, num_start: usize, num_end: usize, cache: &mut HashMap<String, u64>) -> u64 {
@@ -80,23 +143,20 @@ fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: u
     }
 
     // trim over start
-    let mut start = start;
-    for element in elements.iter().skip(start) {
-        if *element != '.' {
-            break;
-        } else {
-            start += 1;
-        }
-    }
+    let start = trim(elements, start);
     
     // access to the cache
-    let key = create_key(elements, numbers, start, num_start);
+    let key = create_key(elements, numbers, start, end, num_start, num_end);
     // if we have already computed this value in a previous iteration we can early exit
     if let Some(&cached_result) = cache.get(&key) {
         return cached_result;
     }
 
-    // TODO - if formal logic arrives at an aswer of only 1 possible combination we can early exit
+    // if the list is solvable formally, we can early exit
+    if let Some(result) = formal_solve(elements, numbers, start, end, num_start, num_end) {
+        cache.insert(key, result);
+        return result;
+    }
 
     // if we are left with a list of '?' we can compute the binomial coheficient and early exit
     if is_pure(elements, start) {
@@ -118,6 +178,7 @@ fn compute_combinations(elements: &[char], numbers: &[u64], start: usize, end: u
 
     let first = elements[start];
 
+    // a point here is not possible
     // if the first character is . or ? we can recurse and ignore it
     if ".?".contains(first) {
         result += compute_combinations(elements, numbers, start + 1, end, num_start, num_end, cache);
@@ -148,9 +209,11 @@ fn task_1(file: String) -> u64 {
             |str| str.parse::<u64>().ok()
         ).collect();
 
+        println!("{:?} {:?}", elements, numbers);
         let len = elements.len();
         let num_len = numbers.len();
         let combinations = compute_combinations(&elements, &numbers, 0, len, 0, num_len, &mut cache);
+        println!("{}", combinations);
 
         sum += combinations;
     }
